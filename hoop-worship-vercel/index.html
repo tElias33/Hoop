@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Hoop Worship | Songs and Chords</title>
+
+    <meta name="description"
+          content="Hoop Worship song, lyric and chord library.">
+    <link rel="icon" type="image/jpeg" href="./assets/hoop-worship-logo.jpg">
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- Bootstrap Icons -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css"
+        rel="stylesheet"
+    >
+    <link rel="stylesheet" href="./styles/style.css?v=song-engine-1">
+</head>
+
+<body class="bg-light">
+
+<div v-scope="MusicApp()" @vue:mounted="init()">
+
+<div :inert="chartFullscreen">
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <a href="#" class="navbar-brand fw-bold brand-lockup">
+                <span class="brand-logo">
+                    <img src="./assets/hoop-worship-logo.jpg" alt="Hoop Worship logo">
+                </span>
+                <span>Hoop Worship</span>
+            </a>
+
+            <button
+                class="btn btn-outline-light btn-sm"
+                @click="openAddForm()"
+            >
+                <i class="bi bi-plus-lg"></i>
+                Add Item
+            </button>
+        </div>
+    </nav>
+
+
+    <!-- HEADER / SEARCH -->
+    <header class="bg-white border-bottom py-4">
+        <div class="container">
+
+            <div class="row align-items-center g-3">
+
+                <div class="col-lg-5">
+                    <h1 class="h3 mb-1">
+                        Songs &amp; Chords
+                    </h1>
+
+                    <p class="text-secondary mb-0">
+                        Songs, lyrics and chords for Hoop Worship.
+                    </p>
+                </div>
+
+                <div class="col-lg-7">
+
+                    <div class="input-group input-group-lg">
+
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+
+                        <input
+                            type="search"
+                            class="form-control"
+                            placeholder="Search songs, lessons, artists or chords..."
+                            v-model="search"
+                        >
+
+                        <button
+                            v-if="search"
+                            class="btn btn-outline-secondary"
+                            @click="search = ''"
+                        >
+                            Clear
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </header>
+
+
+    <!-- MAIN -->
+    <main class="container py-4">
+
+        <div class="row g-4">
+
+            <!-- SIDEBAR -->
+            <aside class="col-lg-3">
+
+                <div class="card sticky-sidebar">
+
+                    <div class="card-body">
+
+                        <h2 class="h6 fw-bold mb-3">Mi biblioteca</h2>
+                        <div class="d-grid gap-2">
+                            <button class="btn text-start" :class="collection === 'all' && filter === 'all' ? 'btn-dark' : 'btn-outline-dark'" @click="selectCollection('all')">Todas <span class="float-end">{{ activeItems.length }}</span></button>
+                            <button class="btn text-start" :class="collection === 'favorites' ? 'btn-dark' : 'btn-outline-dark'" @click="selectCollection('favorites')">★ Favoritas <span class="float-end">{{ favoriteCount }}</span></button>
+                            <button class="btn text-start" :class="collection === 'all' && filter === 'song' ? 'btn-dark' : 'btn-outline-dark'" @click="selectCollection('all'); filter = 'song'">Canciones</button>
+                            <button class="btn text-start" :class="collection === 'all' && filter === 'lesson' ? 'btn-dark' : 'btn-outline-dark'" @click="selectCollection('all'); filter = 'lesson'">Lecciones</button>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+                            <h2 class="h6 mb-0">Mis grupos</h2>
+                            <button class="btn btn-sm btn-outline-dark" @click="startGroupForm()">+ Crear grupo</button>
+                        </div>
+                        <form v-if="showGroupForm" class="border rounded p-2 mb-3" @submit.prevent="saveGroup()">
+                            <label for="group-name" class="form-label small">{{ editingGroupId ? 'Renombrar grupo' : 'Nombre del grupo' }}</label>
+                            <input id="group-name" class="form-control form-control-sm" v-model="groupName" required maxlength="80" placeholder="Ej. Ensayo del domingo">
+                            <div class="d-flex gap-2 mt-2">
+                                <button type="submit" class="btn btn-sm btn-dark">Guardar grupo</button>
+                                <button type="button" class="btn btn-sm btn-outline-dark" @click="showGroupForm = false">Cancelar</button>
+                            </div>
+                        </form>
+                        <p v-if="!organization.groups.length" class="small text-secondary">Crea grupos para preparar ensayos o reunir canciones.</p>
+                        <div v-for="group in organization.groups" :key="group.id" class="mb-2">
+                            <button class="btn text-start w-100 group-name" :class="collection === group.id ? 'btn-dark' : 'btn-outline-dark'" @click="selectCollection(group.id)">{{ group.name }} <span class="float-end">{{ groupCount(group) }}</span></button>
+                            <div v-if="arranging" class="d-flex gap-1 mt-1 flex-wrap">
+                                <button class="btn btn-sm btn-outline-dark" :aria-label="'Subir grupo ' + group.name" :disabled="organization.groups[0].id === group.id" @click="moveGroup(group, -1)">↑</button>
+                                <button class="btn btn-sm btn-outline-dark" :aria-label="'Bajar grupo ' + group.name" :disabled="organization.groups[organization.groups.length - 1].id === group.id" @click="moveGroup(group, 1)">↓</button>
+                                <button class="btn btn-sm btn-outline-dark" @click="startGroupForm(group)" :aria-label="'Renombrar ' + group.name">Renombrar</button>
+                                <button class="btn btn-sm btn-outline-dark" @click="deleteGroup(group)" :aria-label="'Eliminar grupo ' + group.name">Eliminar</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm text-start w-100 mt-3" :class="collection === 'trash' ? 'btn-dark' : 'btn-outline-dark'" @click="selectCollection('trash')">Papelera <span class="float-end">{{ organization.deleted.length + organization.archivedGroups.length }}</span></button>
+                        <p v-if="organizationError" role="alert" class="small mt-3 mb-0">{{ organizationError }}</p>
+
+                        <hr>
+
+                        <div class="small text-secondary">
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total items</span>
+                                <strong>{{ activeItems.length }}</strong>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <span>Showing</span>
+                                <strong>{{ filteredItems.length }}</strong>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </aside>
+
+
+            <!-- CONTENT -->
+            <section class="col-lg-9">
+
+                <!-- SEARCH STATUS -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+
+                    <div>
+                        <span v-if="search">
+                            Search results for
+                            <strong>"{{ search }}"</strong>
+                        </span>
+
+                        <span v-else>
+                            {{ filterTitle }}
+                        </span>
+                    </div>
+
+                    <span class="badge text-bg-secondary">
+                        {{ filteredItems.length }} items
+                    </span>
+
+                </div>
+
+
+                <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+                    <button v-if="collection !== 'trash'" class="btn btn-outline-dark btn-sm" :aria-pressed="arranging" @click="arranging = !arranging">{{ arranging ? 'Terminar de ordenar' : 'Editar orden' }}</button>
+                    <span v-if="arranging && collection !== 'trash'" class="small text-secondary">Usa ↑ y ↓. Cada grupo y Favoritas conservan su propio orden.</span>
+                    <span v-if="collection === 'trash'" class="small text-secondary">Puedes restaurar las canciones y los grupos eliminados.</span>
+                    <button v-if="collection === 'trash' && organization.deleted.length" class="btn btn-outline-danger btn-sm" @click="emptyTrash()">Vaciar papelera</button>
+                </div>
+                <div v-if="collection === 'trash' && organization.archivedGroups.length" class="card mb-3">
+                    <div class="card-body">
+                        <h2 class="h6">Grupos eliminados</h2>
+                        <div v-for="group in organization.archivedGroups" :key="group.id" class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                            <span>{{ group.name }}</span>
+                            <button class="btn btn-sm btn-outline-dark" @click="restoreGroup(group)" :aria-label="'Restaurar grupo ' + group.name">Restaurar grupo</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ITEMS -->
+                <div
+                    v-if="filteredItems.length"
+                    class="row g-3"
+                >
+
+                    <div
+                        v-for="item in filteredItems"
+                        :key="item.id"
+                        :class="arranging ? 'col-12' : 'col-md-6'"
+                    >
+
+                        <div
+                            class="card h-100 song-card cursor-pointer"
+                            @click="collection !== 'trash' && openItem(item)"
+                        >
+
+                            <div class="card-body">
+
+                                <div class="d-flex justify-content-between gap-2">
+
+                                    <span
+                                        class="badge"
+                                        :class="item.type === 'song'
+                                            ? 'text-bg-primary'
+                                            : 'text-bg-success'"
+                                    >
+                                        {{ item.type === 'song'
+                                            ? 'Song'
+                                            : 'Lesson' }}
+                                    </span>
+
+                                    <small class="text-secondary">
+                                        {{ item.level }}
+                                    </small>
+
+                                </div>
+
+                                <h3 class="h5 mt-3 mb-1">
+                                    {{ item.title }}
+                                </h3>
+
+                                <p
+                                    v-if="item.artist"
+                                    class="text-secondary mb-2"
+                                >
+                                    {{ item.artist }}
+                                </p>
+
+                                <p class="small text-secondary mb-3">
+                                    {{ item.description }}
+                                </p>
+
+
+                                <!-- CHORD PREVIEW -->
+                                <div
+                                    v-if="item.chords && item.chords.length"
+                                    class="d-flex flex-wrap gap-1"
+                                >
+                                    <span
+                                        v-for="chord in item.chords"
+                                        class="badge text-bg-light border chord"
+                                    >
+                                        {{ chord }}
+                                    </span>
+                                </div>
+
+                            </div>
+
+                            <div class="card-footer bg-white" @click.stop>
+                                <div v-if="collection !== 'trash'" class="d-flex flex-wrap gap-2 mb-2">
+                                    <button class="btn btn-sm btn-outline-dark" :aria-pressed="isFavorite(item)" :aria-label="(isFavorite(item) ? 'Quitar de favoritas: ' : 'Añadir a favoritas: ') + item.title" @click="toggleFavorite(item)">{{ isFavorite(item) ? '★ Favorita' : '☆ Favorita' }}</button>
+                                    <button class="btn btn-sm btn-outline-dark" @click="groupItem = item" :aria-label="'Elegir grupos para ' + item.title">Grupos</button>
+                                    <button v-if="collection !== 'all' && collection !== 'favorites'" class="btn btn-sm btn-outline-dark" @click="toggleGroup(organization.groups.find(group => group.id === collection), item)" :aria-label="'Quitar del grupo: ' + item.title">Quitar del grupo</button>
+                                    <button class="btn btn-sm btn-outline-dark" @click="deleteItem(item)" :aria-label="'Eliminar ' + item.title">Eliminar</button>
+                                    <span v-if="arranging" class="d-inline-flex gap-1 ms-auto">
+                                        <button class="btn btn-sm btn-outline-dark" :disabled="!canMoveItem(item, -1)" :aria-label="'Subir ' + item.title" @click="moveItem(item, -1)">↑</button>
+                                        <button class="btn btn-sm btn-outline-dark" :disabled="!canMoveItem(item, 1)" :aria-label="'Bajar ' + item.title" @click="moveItem(item, 1)">↓</button>
+                                    </span>
+                                </div>
+                                <button v-else class="btn btn-sm btn-outline-dark mb-2" @click="restoreItem(item)" :aria-label="'Restaurar ' + item.title">Restaurar</button>
+
+                                <div class="small text-secondary">
+                                    <i class="bi bi-tag"></i>
+
+                                    <span
+                                        v-for="tag in item.tags"
+                                        class="me-2"
+                                    >
+                                        {{ tag }}
+                                    </span>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- EMPTY -->
+                <div
+                    v-else
+                    class="card"
+                >
+                    <div class="card-body text-center py-5">
+
+                        <i class="bi bi-search display-5 text-secondary"></i>
+
+                        <h2 class="h5 mt-3">
+                            {{ search ? 'No se encontraron resultados' : collection === 'favorites' ? 'Todavía no hay favoritas' : collection === 'trash' ? 'No hay canciones en la papelera' : collection !== 'all' ? 'Este grupo todavía está vacío' : 'No hay canciones en esta vista' }}
+                        </h2>
+
+                        <p class="text-secondary mb-3">
+                            {{ collection === 'favorites' ? 'Marca la estrella de una canción para añadirla aquí.' : collection !== 'all' && collection !== 'trash' ? 'Usa el botón Grupos de cada canción para añadirla a este grupo.' : 'Puedes volver a Todas para consultar tu biblioteca.' }}
+                        </p>
+
+                        <button
+                            class="btn btn-outline-dark"
+                            @click="resetSearch"
+                        >
+                            Ver todas
+                        </button>
+
+                    </div>
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+
+    <!-- DETAIL MODAL -->
+    <div
+        v-if="selectedItem"
+        class="modal fade show d-block"
+        tabindex="-1"
+        style="background: rgba(0,0,0,.5);"
+        @click.self="closeItem()"
+    >
+
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <div>
+
+                        <span
+                            class="badge"
+                            :class="selectedItem?.type === 'song'
+                                ? 'text-bg-primary'
+                                : 'text-bg-success'"
+                        >
+                            {{ selectedItem?.type }}
+                        </span>
+
+                        <h2 class="h4 mt-2 mb-0">
+                            {{ selectedItem?.title }}
+                        </h2>
+
+                        <small
+                            v-if="selectedItem?.artist"
+                            class="text-secondary"
+                        >
+                            {{ selectedItem?.artist }}
+                        </small>
+
+                    </div>
+
+                    <button
+                        class="btn-close"
+                        @click="closeItem()"
+                    ></button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <div class="row g-4">
+
+                        <!-- CHORDS -->
+                        <div class="col-md-4">
+
+                            <div class="card bg-light">
+
+                                <div class="card-body">
+
+                                    <h3 class="h6">
+                                        <i class="bi bi-music-note-list"></i>
+                                        Chords
+                                    </h3>
+
+                                    <div class="d-flex flex-wrap gap-2">
+
+                                        <span
+                                            v-for="chord in displayedChords"
+                                            class="badge text-bg-white border chord"
+                                        >
+                                            {{ chord }}
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div
+                                v-if="selectedItem?.key"
+                                class="mt-3"
+                            >
+                                <small class="text-secondary">
+                                    Key
+                                </small>
+
+                                <div class="fw-bold">
+                                    {{ displayedKey }}
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+
+                                <small class="text-secondary">
+                                    Level
+                                </small>
+
+                                <div class="fw-bold">
+                                    {{ selectedItem?.level }}
+                                </div>
+
+                            </div>
+
+                            <div v-if="sourceInfo(selectedItem?.sourceUrl)" class="mt-3">
+                                <small class="text-secondary d-block mb-1">Fuente de la canción</small>
+                                <a
+                                    :href="sourceInfo(selectedItem.sourceUrl).url"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="btn btn-outline-dark btn-sm"
+                                >Abrir en {{ sourceInfo(selectedItem.sourceUrl).name }} ↗</a>
+                            </div>
+
+                        </div>
+
+
+                        <!-- CONTENT -->
+                        <div class="col-md-8">
+
+                            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                <h3 class="h6 mb-0">
+                                {{ selectedItem?.type === 'song'
+                                        ? 'Chord Chart'
+                                        : 'Lesson Content' }}
+                                </h3>
+                                <div v-if="selectedItem?.type === 'song' && selectedItem?.content" class="btn-group btn-group-sm" role="group" aria-label="Transpose song">
+                                    <button type="button" class="btn btn-outline-primary" @click="transposeSteps -= 1" aria-label="Transpose down one semitone">−</button>
+                                    <span class="btn btn-outline-secondary disabled" aria-live="polite">{{ transposeSteps > 0 ? '+' : '' }}{{ transposeSteps }} semitones</span>
+                                    <button type="button" class="btn btn-outline-primary" @click="transposeSteps += 1" aria-label="Transpose up one semitone">+</button>
+                                    <button v-if="transposeSteps" type="button" class="btn btn-outline-secondary" @click="transposeSteps = 0">Reset</button>
+                                </div>
+                            </div>
+
+                            <div
+                                v-if="selectedItem?.content"
+                                class="mb-3"
+                            >
+                                <button
+                                    id="chart-fullscreen-button"
+                                    type="button"
+                                    class="btn btn-outline-dark btn-sm"
+                                    @click="openChartFullscreen()"
+                                ><i class="bi bi-arrows-fullscreen" aria-hidden="true"></i> Pantalla completa</button>
+                            </div>
+
+                            <div
+                                v-if="selectedItem?.content"
+                                class="lyrics border rounded p-3 bg-light"
+                            ><div class="positioned-chart" :style="{ width: chartWidth + 'ch' }"><div v-for="row in displayedRows" :key="row.line" class="chart-row"><div class="chart-text-row" :style="{ height: (row.lanes + (row.inline ? 1 : 0)) * 1.5 + 'em' }"><span v-for="(segment, index) in row.segments" :key="index" :class="{ 'chart-note': segment.chord }" :style="{ left: segment.column + 'ch', top: (segment.chord ? segment.lane : row.inline ? row.lanes : 0) * 1.5 + 'em' }" v-text="segment.text"></span></div><div v-for="photo in row.displayImages" :key="photo.id" class="chart-photo-row"><figure :style="{ marginLeft: photo.displayColumn + 'ch' }"><img :src="photo.dataUrl" :alt="'Foto del acorde original ' + photo.chord" @load="chartFullscreen && presentationAutoFit && fitChartToScreen()"><figcaption>Foto original: {{ photo.chord }}</figcaption></figure></div></div></div></div>
+                            <p v-if="unresolvedPhotos.length" role="status" class="small">{{ unresolvedPhotos.length }} foto(s) necesitan elegir de nuevo su acorde en Edit item. Las imágenes están conservadas.</p>
+                            <p v-if="selectedItem?.chordImages?.length && transposeSteps" class="small">Las fotos muestran la digitación original. La etiqueta y la posición se conservan; la imagen no cambia con la tonalidad.</p>
+                            <div v-if="!selectedItem?.content" class="border rounded p-3 bg-light text-secondary">
+                                {{ selectedItem?.sourceUrl ? 'Enlace guardado. Pulsa Edit item y después Importar canción, o pega la letra y los acordes.' : 'Todavía no hay texto con acordes. Puedes añadirlo con Edit item.' }}
+                            </div>
+
+                            <div v-if="selectedItem?.originalImageData" class="mt-4">
+                                <h3 class="h6">Original image</h3>
+                                <img
+                                    :src="selectedItem.originalImageData"
+                                    :alt="'Original chord chart for ' + selectedItem.title"
+                                    class="source-image border rounded"
+                                >
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-outline-dark me-auto"
+                        @click="editItem(selectedItem)"
+                    >
+                        <i class="bi bi-pencil"></i>
+                        Edit item
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        @click="closeItem()"
+                    >
+                        Close
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ADD ITEM MODAL -->
+    <div
+        v-if="showAddForm"
+        class="modal fade show d-block"
+        tabindex="-1"
+        style="background: rgba(0,0,0,.5);"
+    >
+
+        <div class="modal-dialog modal-lg">
+
+            <div class="modal-content">
+
+                <form @submit.prevent="addItem()">
+
+                    <div class="modal-header">
+
+                        <h2 class="h5 mb-0">
+                            {{ editingItemId !== null ? 'Edit Song / Lesson' : 'Add New Song / Lesson' }}
+                        </h2>
+
+                        <button
+                            type="button"
+                            class="btn-close"
+                            @click="closeAddForm()"
+                        ></button>
+
+                    </div>
+
+
+                    <div class="modal-body">
+
+                        <div class="alert alert-info small">
+                            Songs you add are saved in this browser. Pasted text and text read from an image are stored with the song.
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <div class="col-12">
+                                <div class="border rounded p-3 bg-light">
+                                    <label class="form-label fw-semibold" for="song-source-url">Añadir desde un enlace</label>
+                                    <div class="input-group">
+                                        <input
+                                            id="song-source-url"
+                                            type="text"
+                                            inputmode="url"
+                                            class="form-control"
+                                            v-model="form.sourceUrl"
+                                            @input="linkError = ''; linkNotice = ''"
+                                            placeholder="Pega un enlace de Cifra Club o La Cuerda"
+                                            aria-describedby="source-url-help"
+                                        >
+                                        <button type="button" class="btn btn-outline-dark" :disabled="linkBusy || ocrBusy || photoBusy" @click="importSourceLink()">{{ linkBusy ? 'Importando…' : 'Importar canción' }}</button>
+                                    </div>
+                                    <div id="source-url-help" class="form-text">Importa letra y acordes. Si Cifra Club bloquea la lectura, copia allí la letra con sus acordes, pégala en Contenido y escribe el título manualmente.</div>
+                                    <p v-if="linkError" class="small mt-2 mb-0" role="alert">{{ linkError }}</p>
+                                    <p v-if="linkNotice" class="small mt-2 mb-0" role="status">{{ linkNotice }}</p>
+                                    <div v-if="importedDraft" class="mt-2"><pre class="import-preview" v-text="importedDraft.content"></pre><button type="button" class="btn btn-sm btn-outline-dark" @click="applyImportedSong()">Usar contenido importado</button><button type="button" class="btn btn-sm" @click="importedDraft = null">Descartar importación</button></div>
+                                </div>
+                            </div>
+
+                            <!-- TYPE -->
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Type
+                                </label>
+
+                                <select
+                                    class="form-select"
+                                    v-model="form.type"
+                                    required
+                                >
+                                    <option value="song">
+                                        Song
+                                    </option>
+
+                                    <option value="lesson">
+                                        Lesson
+                                    </option>
+                                </select>
+
+                            </div>
+
+
+                            <!-- LEVEL -->
+                            <div class="col-md-6">
+
+                                <label class="form-label">
+                                    Level
+                                </label>
+
+                                <select
+                                    class="form-select"
+                                    v-model="form.level"
+                                >
+                                    <option>Beginner</option>
+                                    <option>Intermediate</option>
+                                    <option>Advanced</option>
+                                </select>
+
+                            </div>
+
+
+                            <!-- TITLE -->
+                            <div class="col-12">
+
+                                <label class="form-label">
+                                    Title
+                                </label>
+
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    v-model="form.title"
+                                    placeholder="Song or lesson title"
+                                    required
+                                >
+
+                            </div>
+
+
+                            <!-- ARTIST -->
+                            <div
+                                v-if="form.type === 'song'"
+                                class="col-md-6"
+                            >
+
+                                <label class="form-label">
+                                    Artist
+                                </label>
+
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    v-model="form.artist"
+                                    placeholder="Artist name"
+                                >
+
+                            </div>
+
+
+                            <!-- KEY -->
+                            <div
+                                v-if="form.type === 'song'"
+                                class="col-md-6"
+                            >
+
+                                <label class="form-label">
+                                    Key
+                                </label>
+
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    v-model="form.key"
+                                    placeholder="Example: G"
+                                >
+
+                            </div>
+
+
+                            <!-- CHORDS -->
+                            <div class="col-12">
+
+                                <label class="form-label">
+                                    Chords
+                                </label>
+
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    v-model="form.chords"
+                                    placeholder="G, C, D, Em"
+                                >
+
+                                <div class="form-text">
+                                    Separate chords using commas.
+                                </div>
+
+                            </div>
+
+
+                            <!-- TAGS -->
+                            <div class="col-12">
+
+                                <label class="form-label">
+                                    Tags
+                                </label>
+
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    v-model="form.tags"
+                                    placeholder="guitar, beginner, Malayalam"
+                                >
+
+                            </div>
+
+
+                            <!-- DESCRIPTION -->
+                            <div class="col-12">
+
+                                <label class="form-label">
+                                    Description
+                                </label>
+
+                                <textarea
+                                    class="form-control"
+                                    rows="2"
+                                    v-model="form.description"
+                                ></textarea>
+
+                            </div>
+
+
+                            <!-- CONTENT -->
+                            <div class="col-12">
+
+                                <label class="form-label">
+                                    Content / Chord Chart
+                                </label>
+
+                                <textarea
+                                    class="form-control chart-editor"
+                                    rows="9"
+                                    wrap="off"
+                                    v-model="form.content"
+                                    @paste="pasteChart($event)"
+                                    placeholder="Paste lyrics and chords here. Chords on their own lines or in [brackets] can be transposed."
+                                ></textarea>
+                                <div class="form-text">
+                                    Paste a chord chart directly. Chords on separate lines or written as [G]lyrics can be recognized for transposition.
+                                </div>
+
+                                <div class="border rounded p-3 mt-3">
+                                    <label for="chord-photo-target" class="form-label">Foto de un acorde en una posición concreta</label>
+                                    <select id="chord-photo-target" class="form-select mb-2" v-model="imageTarget"><option value="">Selecciona el acorde y su posición</option><option v-for="target in photoTargets" :key="target.value" :value="target.value">{{ target.label }}</option></select>
+                                    <input id="chord-photo-file" type="file" accept="image/png,image/jpeg,image/webp,image/bmp" :disabled="photoBusy || ocrBusy || linkBusy" @change="attachChordPhoto($event.target.files[0]); $event.target.value = ''" aria-label="Subir foto para el acorde seleccionado">
+                                    <div class="form-text">Selecciona el destino y sube o pega una foto en el editor. La foto conserva la digitación original al transponer. Máximo 3 MB por foto.</div>
+                                    <p v-if="photoError" role="alert" class="small">{{ photoError }}</p>
+                                    <div v-for="photo in formPhotos" :key="photo.id" class="d-flex align-items-start gap-2 mt-2"><img :src="photo.dataUrl" class="photo-preview" :alt="'Foto original de ' + photo.chord"><div><span>{{ photo.line < 0 ? 'Destino pendiente' : 'Línea ' + (photo.line + 1) }} · {{ photo.chord }}</span><button type="button" class="btn btn-sm d-block" @click="relocatePhoto(photo)">Mover al destino seleccionado</button><button type="button" class="btn btn-sm" @click="form.chordImages = form.chordImages.filter(p => p.id !== photo.id)">Quitar foto</button></div></div>
+                                </div>
+
+                                <div class="border rounded p-3 mt-3 bg-light">
+                                    <label class="form-label fw-semibold" for="chart-image">Attach the original chart image</label>
+                                    <div class="row g-2 align-items-end">
+                                        <div class="col-md-8">
+                                            <input id="chart-image" type="file" class="form-control" accept=".jpg,.jpeg,.png,.bmp,.webp" @change="readImage($event)" :disabled="ocrBusy || photoBusy || linkBusy">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label" for="ocr-language">Image text language</label>
+                                            <select id="ocr-language" class="form-select" v-model="ocrLanguage" :disabled="ocrBusy || photoBusy || linkBusy">
+                                                <option value="eng">English</option>
+                                                <option value="spa">Spanish</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div v-if="form.originalImageData" class="d-flex align-items-start gap-3 mt-3">
+                                        <img :src="form.originalImageData" alt="Original chart preview" class="source-image border rounded">
+                                        <button type="button" class="btn btn-sm btn-outline-dark" @click="form.originalImageData = ''">Remove image</button>
+                                    </div>
+                                    <div v-if="ocrBusy" class="small text-primary mt-2" aria-live="polite">
+                                        {{ ocrStatus }}<span v-if="ocrStatus === 'Recognizing text'">… {{ ocrProgress }}%</span>
+                                        <div v-if="ocrStatus === 'Recognizing text'" class="progress mt-1" role="progressbar" :aria-valuenow="ocrProgress" aria-valuemin="0" aria-valuemax="100">
+                                            <div class="progress-bar" :style="{ width: ocrProgress + '%' }"></div>
+                                        </div>
+                                    </div>
+                                    <div v-if="ocrError" class="small text-danger mt-2" role="alert">{{ ocrError }}</div>
+                                    <div class="form-text mt-2">The image is saved unchanged with the song. Its text is read in your browser; review and correct the transcription before saving. The OCR language model downloads the first time you use this feature.</div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            @click="closeAddForm()"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                            :disabled="linkBusy || ocrBusy || photoBusy"
+                        >
+                            <i class="bi bi-plus-lg"></i>
+                            {{ editingItemId !== null ? 'Save Changes' : 'Add Item' }}
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div v-if="groupItem" class="modal fade show d-block" style="background: rgba(0,0,0,.55)" role="dialog" aria-modal="true" aria-labelledby="group-picker-title" @click.self="groupItem = null" @keydown.escape="groupItem = null">
+        <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+            <div class="modal-header">
+                <h2 id="group-picker-title" class="h5 mb-0">Grupos de {{ groupItem.title }}</h2>
+                <button class="btn-close" aria-label="Cerrar selección de grupos" @click="groupItem = null"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-secondary">Puedes incluir una canción en varios grupos. Los cambios se guardan al marcar cada casilla.</p>
+                <p v-if="!organization.groups.length">Todavía no hay grupos. Usa «Crear grupo» en la biblioteca.</p>
+                <label v-for="group in organization.groups" :key="group.id" class="d-flex align-items-center gap-2 border rounded p-3 mb-2">
+                    <input type="checkbox" class="form-check-input m-0" :checked="groupContains(group, groupItem)" @change="toggleGroup(group, groupItem)">
+                    <span>{{ group.name }}</span>
+                </label>
+                <p v-if="organizationError" role="alert">{{ organizationError }}</p>
+            </div>
+            <div class="modal-footer"><button class="btn btn-dark" @click="groupItem = null">Listo</button></div>
+        </div></div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-top bg-white py-4 mt-5">
+
+        <div class="container">
+
+            <div class="text-center text-secondary small">
+                Hoop Worship · Saved in this browser
+            </div>
+
+        </div>
+
+    </footer>
+
+</div>
+
+<section
+    id="chart-presentation"
+    :style="{ display: chartFullscreen ? 'block' : 'none' }"
+    style="display: none"
+    class="chart-presentation"
+    role="dialog"
+    aria-modal="true"
+    :aria-label="'Letra y acordes de ' + (selectedItem?.title || '')"
+    tabindex="-1"
+    @keydown.escape.prevent.stop="exitChartFullscreen()"
+>
+    <div class="presentation-controls" role="group" aria-label="Tamaño del texto">
+        <button type="button" aria-label="Reducir tamaño del texto" title="Reducir letra y acordes" :disabled="presentationFontSize <= 8" @click="changePresentationSize(-1)">A−</button>
+        <output aria-live="polite" :aria-label="'Tamaño del texto: ' + presentationFontSize">{{ presentationFontSize }}</output>
+        <button type="button" aria-label="Aumentar tamaño del texto" title="Aumentar letra y acordes" :disabled="presentationFontSize >= 48" @click="changePresentationSize(1)">A+</button>
+        <button type="button" class="presentation-fit" :class="{ 'is-active': presentationAutoFit }" :aria-pressed="presentationAutoFit" @click="fitChartToScreen()">Ajustar a pantalla</button>
+    </div>
+    <button
+        type="button"
+        class="presentation-exit"
+        aria-label="Salir de pantalla completa"
+        title="Salir de pantalla completa (Esc)"
+        @click="exitChartFullscreen()"
+    ><span aria-hidden="true">×</span></button>
+    <div class="presentation-lyrics positioned-chart" :style="{ fontSize: presentationFontSize + 'px', width: chartWidth + 'ch' }"><div v-for="row in displayedRows" :key="row.line" class="chart-row"><div class="chart-text-row" :style="{ height: (row.lanes + (row.inline ? 1 : 0)) * 1.5 + 'em' }"><span v-for="(segment, index) in row.segments" :key="index" :class="{ 'chart-note': segment.chord }" :style="{ left: segment.column + 'ch', top: (segment.chord ? segment.lane : row.inline ? row.lanes : 0) * 1.5 + 'em' }" v-text="segment.text"></span></div><div v-for="photo in row.displayImages" :key="photo.id" class="chart-photo-row"><figure :style="{ marginLeft: photo.displayColumn + 'ch' }"><img :src="photo.dataUrl" :alt="'Foto del acorde original ' + photo.chord" @load="presentationAutoFit && fitChartToScreen()"><figcaption>Foto original: {{ photo.chord }}</figcaption></figure></div></div></div>
+</section>
+
+</div>
+<script src="./petite-vue.js"></script>
+<!-- DATA -->
+<script src="data.js"></script>
+<script src="song-engine.js?v=1"></script>
+
+<!-- APPLICATION -->
+<script src="app.js?v=song-engine-1"></script>
+
+</body>
+</html>

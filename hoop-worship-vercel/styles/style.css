@@ -1,0 +1,269 @@
+
+:root {
+    --hoop-ink: #282828;
+    --hoop-charcoal: #424242;
+    --hoop-mid: #727272;
+    --hoop-silver: #bdbdbd;
+    --hoop-fog: #ededed;
+    --hoop-paper: #f6f6f5;
+
+    --bs-primary: var(--hoop-charcoal);
+    --bs-primary-rgb: 66, 66, 66;
+    --bs-success: #707070;
+    --bs-success-rgb: 112, 112, 112;
+    --bs-info: #707070;
+    --bs-info-rgb: 112, 112, 112;
+    --bs-warning: #777777;
+    --bs-warning-rgb: 119, 119, 119;
+    --bs-danger: #686868;
+    --bs-danger-rgb: 104, 104, 104;
+    --bs-dark: var(--hoop-ink);
+    --bs-dark-rgb: 40, 40, 40;
+    --bs-secondary: var(--hoop-mid);
+    --bs-secondary-rgb: 114, 114, 114;
+    --bs-light: var(--hoop-paper);
+    --bs-light-rgb: 246, 246, 245;
+    --bs-body-color: #292929;
+    --bs-body-bg: #f1f1f0;
+    --bs-border-color: #dededc;
+    --bs-link-color: #484848;
+    --bs-link-hover-color: #222222;
+}
+
+body {
+    background-color: var(--bs-body-bg) !important;
+    color: var(--bs-body-color);
+}
+
+.navbar-dark.bg-dark {
+    background-color: var(--hoop-ink) !important;
+}
+
+.brand-lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: .7rem;
+    letter-spacing: .01em;
+}
+
+.brand-logo {
+    display: block;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: 0 0 2.75rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .78);
+    border-radius: 50%;
+    background: #fff;
+}
+
+.brand-logo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transform: scale(1.22);
+}
+
+.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #4b4b4b;
+    --bs-btn-border-color: #4b4b4b;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #333;
+    --bs-btn-hover-border-color: #333;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #292929;
+    --bs-btn-active-border-color: #292929;
+    --bs-btn-disabled-bg: #777;
+    --bs-btn-disabled-border-color: #777;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: #454545;
+    --bs-btn-border-color: #777;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #454545;
+    --bs-btn-hover-border-color: #454545;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #333;
+    --bs-btn-active-border-color: #333;
+    --bs-btn-disabled-color: #777;
+    --bs-btn-disabled-border-color: #aaa;
+}
+
+.btn-dark {
+    --bs-btn-bg: #383838;
+    --bs-btn-border-color: #383838;
+    --bs-btn-hover-bg: #242424;
+    --bs-btn-hover-border-color: #242424;
+}
+
+.alert-info {
+    --bs-alert-color: #424242;
+    --bs-alert-bg: #ededed;
+    --bs-alert-border-color: #d8d8d8;
+    --bs-alert-link-color: #282828;
+}
+
+.text-primary {
+    color: #4b4b4b !important;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.chord {
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.lyrics,
+.chart-editor {
+    overflow-x: auto;
+    white-space: pre;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.source-image {
+    display: block;
+    max-width: 100%;
+    max-height: 32rem;
+    object-fit: contain;
+    background: #fff;
+}
+
+.positioned-chart { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; line-height: 1.5; }
+.chart-text-row { position: relative; min-height: 1.5em; }
+.chart-text-row > span { position: absolute; white-space: pre; }
+.chart-note { font-weight: 600; }
+.chart-photo-row { padding: .25em 0; }
+.chart-photo-row figure { margin-top: 0; margin-bottom: 0; width: 12ch; }
+.chart-photo-row img { display: block; width: 12ch; height: 6em; object-fit: contain; background: white; }
+.chart-photo-row figcaption { white-space: normal; font-size: .65em; }
+.photo-preview { width: 5rem; height: 4rem; object-fit: contain; }
+.import-preview { max-height: 15rem; overflow: auto; white-space: pre; }
+
+.sticky-sidebar {
+    position: sticky;
+    top: 1rem;
+}
+
+.song-card {
+    transition: border-color .15s ease;
+}
+
+.song-card:hover {
+    border-color: var(--hoop-mid) !important;
+}
+
+.group-name {
+    overflow-wrap: anywhere;
+}
+
+.form-check-input:checked {
+    background-color: var(--hoop-charcoal);
+    border-color: var(--hoop-charcoal);
+}
+
+.chart-presentation {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 4rem clamp(1rem, 4vw, 4rem) 1rem;
+    background: var(--hoop-paper);
+    color: var(--hoop-ink);
+    outline: none;
+}
+
+.chart-presentation::backdrop {
+    background: var(--hoop-paper);
+}
+
+.presentation-lyrics {
+    width: max-content;
+    margin: 0 auto;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    white-space: pre;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: clamp(1.125rem, 2.2vw, 2rem);
+    line-height: 1.5;
+    tab-size: 8;
+}
+
+.presentation-exit {
+    position: fixed;
+    top: max(.5rem, env(safe-area-inset-top));
+    right: max(.5rem, env(safe-area-inset-right));
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--hoop-paper);
+    color: var(--hoop-mid);
+    font-size: 2rem;
+    line-height: 1;
+    opacity: .45;
+    cursor: pointer;
+}
+
+.presentation-exit:hover,
+.presentation-exit:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--hoop-charcoal);
+    outline-offset: 2px;
+}
+
+.presentation-controls {
+    position: fixed;
+    top: max(.5rem, env(safe-area-inset-top));
+    left: max(.5rem, env(safe-area-inset-left));
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    max-width: calc(100% - 4rem);
+    background: var(--hoop-paper);
+    border-radius: .5rem;
+    color: var(--hoop-charcoal);
+}
+
+.presentation-controls button {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    padding: .4rem .6rem;
+    border: 0;
+    border-radius: .4rem;
+    background: transparent;
+    color: inherit;
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.presentation-controls output {
+    min-width: 1.5rem;
+    font-size: .8rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.presentation-controls button:hover,
+.presentation-controls .is-active {
+    background: var(--hoop-fog);
+}
+
+.presentation-controls button:focus-visible {
+    outline: 2px solid var(--hoop-charcoal);
+    outline-offset: 1px;
+}
+
+.presentation-controls button:disabled {
+    opacity: .35;
+}
